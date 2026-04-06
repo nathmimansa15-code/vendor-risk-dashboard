@@ -6,7 +6,7 @@ An end-to-end analytics dashboard designed to monitor vendor risk by combining p
 https://vendor-risk-dashboard.streamlit.app
 
 ## 📸 Dashboard Preview
-![Dashboard](your-screenshot.png)
+![Dashboard](dashboard.png)
 
 ## 🚀 Features
 - Integrated 5 vendor datasets (performance, compliance, financials, incidents)
