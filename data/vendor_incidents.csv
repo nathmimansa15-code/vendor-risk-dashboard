@@ -1,0 +1,6 @@
+vendor_id,incident_count,incident_severity,last_incident_date
+V001,2,Medium,2024-01-22
+V002,3,High,2023-12-05
+V003,6,High,2024-03-10
+V004,1,Low,2023-08-15
+V005,4,Medium,2024-02-18

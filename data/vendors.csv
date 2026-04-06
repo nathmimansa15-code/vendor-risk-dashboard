@@ -1,0 +1,16 @@
+vendor_id,vendor_name,country,category,onboarding_date,contract_value,critical_vendor_flag
+V001,SecureCloud Inc,USA,Cloud Services,2023-01-15,250000,Yes
+V002,DataBridge Solutions,Canada,Data Integration,2022-11-03,180000,Yes
+V003,RapidSource Tech,India,IT Support,2024-02-10,95000,No
+V004,FinCore Analytics,USA,Financial Analytics,2021-09-25,300000,Yes
+V005,GreenRoute Logistics,Germany,Logistics,2023-06-14,140000,No
+V006,BluePeak Systems,UK,Cybersecurity,2022-08-19,275000,Yes
+V007,AlphaWare Ops,Singapore,Operations,2024-01-08,110000,No
+V008,NextGen Devices,Japan,Hardware,2021-12-02,220000,Yes
+V009,OmniData Labs,USA,Data Engineering,2023-04-21,195000,Yes
+V010,CoreAxis Networks,USA,Networking,2022-05-11,160000,No
+V011,TrustLayer AI,Israel,AI Services,2024-03-18,205000,Yes
+V012,Vertex Compliance,USA,Compliance,2023-07-27,125000,No
+V013,PrimeLedger Tech,India,FinTech,2022-10-30,175000,Yes
+V014,Skyline Secure,Canada,Cybersecurity,2023-09-13,210000,Yes
+V015,DeltaOps Logistics,Mexico,Logistics,2024-02-28,90000,No

@@ -1,0 +1,6 @@
+vendor_id,vendor_name,country,category,onboarding_date,contract_value,critical_vendor_flag,compliance_score,audit_status,last_audit_date,issues_found,annual_revenue,profit_margin,financial_risk_score,delivery_score,quality_score,sla_breach_count,incident_count,incident_severity,last_incident_date,risk_score,risk_category
+V001,SecureCloud Inc,USA,Cloud Services,2023-01-15,250000,Yes,92,Passed,2024-01-10,1,2000000,18,20,95,90,1,2,Medium,2024-01-22,21.4,Low Risk
+V002,DataBridge Solutions,Canada,Data Integration,2022-11-03,180000,Yes,85,Passed,2023-11-15,2,1500000,15,30,88,85,2,3,High,2023-12-05,35.4,Low Risk
+V003,RapidSource Tech,India,IT Support,2024-02-10,95000,No,70,Pending,2024-03-01,4,800000,10,50,75,70,5,6,High,2024-03-10,71.5,High Risk
+V004,FinCore Analytics,USA,Financial Analytics,2021-09-25,300000,Yes,95,Passed,2023-09-20,0,2500000,22,15,97,92,0,1,Low,2023-08-15,10.85,Low Risk
+V005,GreenRoute Logistics,Germany,Logistics,2023-06-14,140000,No,78,Passed,2024-02-11,3,900000,12,40,82,78,3,4,Medium,2024-02-18,49.2,Medium Risk

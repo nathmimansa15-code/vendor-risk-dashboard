@@ -1,0 +1,6 @@
+vendor_id,delivery_score,quality_score,sla_breach_count
+V001,95,90,1
+V002,88,85,2
+V003,75,70,5
+V004,97,92,0
+V005,82,78,3

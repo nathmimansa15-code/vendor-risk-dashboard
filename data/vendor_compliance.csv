@@ -1,0 +1,6 @@
+vendor_id,compliance_score,audit_status,last_audit_date,issues_found
+V001,92,Passed,2024-01-10,1
+V002,85,Passed,2023-11-15,2
+V003,70,Pending,2024-03-01,4
+V004,95,Passed,2023-09-20,0
+V005,78,Passed,2024-02-11,3
