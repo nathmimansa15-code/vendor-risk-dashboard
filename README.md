@@ -1,5 +1,5 @@
 # 📊 Vendor 360 Risk Intelligence Dashboard
-
+🔗 **Live Demo:** https://vendor-risk-dashboard.streamlit.app
 ## 🔍 Overview
 This project presents an end-to-end vendor risk analytics solution built using Python and Streamlit. It helps organizations evaluate vendor performance across multiple dimensions and make data-driven decisions.
 
