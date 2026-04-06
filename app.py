@@ -1,258 +1,366 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
 import os
+import pandas as pd
+import streamlit as st
 
-# ---------- Page Config ----------
-st.set_page_config(
-    page_title="Vendor 360 Risk Dashboard",
-    page_icon="📊",
-    layout="wide"
-)
+st.set_page_config(page_title="Vendor 360 Risk Dashboard", layout="wide")
 
-# ---------- Styling ----------
+# -----------------------------
+# CUSTOM CSS
+# -----------------------------
 st.markdown("""
 <style>
 .main {
-    background: linear-gradient(180deg, #0b1220 0%, #111827 100%);
+    background-color: #071126;
 }
-.dashboard-title {
-    font-size: 40px;
-    font-weight: 800;
-    color: #f9fafb;
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
 }
-.dashboard-subtitle {
-    font-size: 18px;
-    color: #cbd5e1;
-    margin-bottom: 1.5rem;
+h1, h2, h3 {
+    color: white;
 }
-.section-header {
-    font-size: 24px;
-    font-weight: 700;
-    color: #f8fafc;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
-.metric-card {
-    background: linear-gradient(135deg, #1e293b, #0f172a);
+[data-testid="stMetric"] {
+    background: linear-gradient(135deg, #111827, #1f2937);
+    border: 1px solid rgba(255,255,255,0.08);
     padding: 18px;
     border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
 }
-.metric-label {
-    font-size: 14px;
+[data-testid="stMetricLabel"] {
     color: #cbd5e1;
 }
-.metric-value {
-    font-size: 36px;
-    font-weight: 800;
-    color: #60a5fa;
-}
-.info-card {
-    background: linear-gradient(135deg, #172554, #1e3a8a);
-    padding: 16px;
-    border-radius: 16px;
-    margin-bottom: 1rem;
+[data-testid="stMetricValue"] {
     color: white;
+}
+div[data-baseweb="select"] > div {
+    background-color: #111827 !important;
+    color: white !important;
+    border-radius: 10px !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- Load Data ----------
-file_path = "outputs/vendor_risk_results.csv"
+# -----------------------------
+# TITLE
+# -----------------------------
+st.title("📊 Vendor 360 Risk Intelligence Dashboard")
+st.caption("An integrated vendor risk monitoring dashboard combining performance, compliance, incidents, and financial health.")
 
-if not os.path.exists(file_path):
-    st.error("❌ Output file not found. Run risk_analysis.py first.")
-    st.stop()
+# -----------------------------
+# LOAD FILES
+# -----------------------------
+DATA_FOLDER = "data"
 
-df = pd.read_csv(file_path)
+files = {
+    "vendors": "vendors.csv",
+    "performance": "vendor_performance.csv",
+    "compliance": "vendor_compliance.csv",
+    "financials": "vendor_financials.csv",
+    "incidents": "vendor_incidents.csv"
+}
 
-# ---------- Header ----------
-st.markdown('<div class="dashboard-title">Vendor 360 Risk Intelligence Dashboard</div>', unsafe_allow_html=True)
-st.markdown('<div class="dashboard-subtitle">Interactive analytics platform for monitoring vendor risk</div>', unsafe_allow_html=True)
+for _, file in files.items():
+    path = os.path.join(DATA_FOLDER, file)
+    if not os.path.exists(path):
+        st.error(f"❌ Missing file: {file}")
+        st.write("Available files:", os.listdir(DATA_FOLDER))
+        st.stop()
 
-# ---------- Banner ----------
-high_risk_total = len(df[df["risk_category"] == "High Risk"])
+vendors = pd.read_csv(os.path.join(DATA_FOLDER, files["vendors"]))
+performance = pd.read_csv(os.path.join(DATA_FOLDER, files["performance"]))
+compliance = pd.read_csv(os.path.join(DATA_FOLDER, files["compliance"]))
+financials = pd.read_csv(os.path.join(DATA_FOLDER, files["financials"]))
+incidents = pd.read_csv(os.path.join(DATA_FOLDER, files["incidents"]))
 
-if high_risk_total > 0:
-    banner_text = f"🚨 {high_risk_total} vendor(s) require immediate attention"
-else:
-    banner_text = "✅ No high-risk vendors detected"
+# -----------------------------
+# CLEAN COLUMN NAMES
+# -----------------------------
+def clean(df):
+    df.columns = (
+        df.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(" ", "_")
+        .str.replace("-", "_")
+    )
+    return df
 
-st.markdown(f"""
-<div style="background: linear-gradient(90deg, #1e3a8a, #0f172a);
-padding: 14px; border-radius: 12px; color:white; margin-bottom: 15px;">
-{banner_text}
-</div>
-""", unsafe_allow_html=True)
+vendors = clean(vendors)
+performance = clean(performance)
+compliance = clean(compliance)
+financials = clean(financials)
+incidents = clean(incidents)
 
-# ---------- Sidebar ----------
-st.sidebar.title("⚙️ Filters")
+# -----------------------------
+# MERGE DATA
+# -----------------------------
+df = vendors.merge(performance, on="vendor_id", how="left") \
+            .merge(compliance, on="vendor_id", how="left") \
+            .merge(financials, on="vendor_id", how="left") \
+            .merge(incidents, on="vendor_id", how="left")
 
-risk_filter = st.sidebar.selectbox(
-    "Risk Category",
-    ["All"] + sorted(df["risk_category"].dropna().unique().tolist())
+# -----------------------------
+# FILL MISSING VALUES SAFELY
+# -----------------------------
+for col in df.columns:
+    if pd.api.types.is_numeric_dtype(df[col]):
+        df[col] = df[col].fillna(0)
+    else:
+        df[col] = df[col].fillna("Unknown")
+
+# -----------------------------
+# ENSURE EXPECTED COLUMNS EXIST
+# -----------------------------
+expected_numeric_cols = [
+    "delivery_score",
+    "quality_score",
+    "sla_breach_count",
+    "compliance_score",
+    "issues_found",
+    "financial_risk_score",
+    "incident_count",
+    "contract_value"
+]
+
+for col in expected_numeric_cols:
+    if col not in df.columns:
+        df[col] = 0
+
+if "critical_vendor_flag" not in df.columns:
+    df["critical_vendor_flag"] = "no"
+
+# -----------------------------
+# NORMALIZE FLAG
+# -----------------------------
+df["critical_vendor_flag"] = df["critical_vendor_flag"].astype(str).str.strip().str.lower()
+df["critical_vendor_score"] = df["critical_vendor_flag"].apply(
+    lambda x: 10 if x in ["yes", "y", "true", "1"] else 0
 )
 
-vendor_filter = st.sidebar.selectbox(
-    "Vendor",
-    ["All"] + sorted(df["vendor_name"].dropna().unique().tolist())
-)
+# -----------------------------
+# RISK SUB-SCORES
+# -----------------------------
+df["performance_risk"] = (
+    (100 - df["delivery_score"]) * 0.20 +
+    (100 - df["quality_score"]) * 0.20 +
+    df["sla_breach_count"] * 4
+).round(2)
 
-search = st.sidebar.text_input("🔍 Search Vendor")
+df["compliance_risk"] = (
+    (100 - df["compliance_score"]) * 0.20 +
+    df["issues_found"] * 3
+).round(2)
+
+df["financial_risk_component"] = (
+    df["financial_risk_score"] * 0.15
+).round(2)
+
+df["incident_risk"] = (
+    df["incident_count"] * 5
+).round(2)
+
+df["criticality_risk"] = df["critical_vendor_score"]
+
+# -----------------------------
+# TOTAL RISK SCORE
+# -----------------------------
+df["risk_score"] = (
+    df["performance_risk"] +
+    df["compliance_risk"] +
+    df["financial_risk_component"] +
+    df["incident_risk"] +
+    df["criticality_risk"]
+).round(2)
+
+# -----------------------------
+# RISK CATEGORY
+# -----------------------------
+def categorize(score):
+    if score >= 60:
+        return "High Risk"
+    elif score >= 30:
+        return "Medium Risk"
+    else:
+        return "Low Risk"
+
+df["risk_category"] = df["risk_score"].apply(categorize)
+
+# -----------------------------
+# PRIMARY RISK DRIVER
+# -----------------------------
+def find_primary_driver(row):
+    driver_scores = {
+        "Performance": row["performance_risk"],
+        "Compliance": row["compliance_risk"],
+        "Financial": row["financial_risk_component"],
+        "Incidents": row["incident_risk"],
+        "Criticality": row["criticality_risk"]
+    }
+    return max(driver_scores, key=driver_scores.get)
+
+df["primary_risk_driver"] = df.apply(find_primary_driver, axis=1)
+
+# -----------------------------
+# FILTERS
+# -----------------------------
+st.subheader("🔎 Filters")
+f1, f2 = st.columns(2)
+
+country_options = ["All"]
+category_options = ["All"]
+
+if "country" in df.columns:
+    country_options += sorted(df["country"].astype(str).unique().tolist())
+if "category" in df.columns:
+    category_options += sorted(df["category"].astype(str).unique().tolist())
+
+selected_country = f1.selectbox("Country", country_options)
+selected_category = f2.selectbox("Category", category_options)
 
 filtered_df = df.copy()
 
-if risk_filter != "All":
-    filtered_df = filtered_df[filtered_df["risk_category"] == risk_filter]
+if selected_country != "All":
+    filtered_df = filtered_df[filtered_df["country"] == selected_country]
 
-if vendor_filter != "All":
-    filtered_df = filtered_df[filtered_df["vendor_name"] == vendor_filter]
+if selected_category != "All":
+    filtered_df = filtered_df[filtered_df["category"] == selected_category]
 
-if search:
-    filtered_df = filtered_df[
-        filtered_df["vendor_name"].astype(str).str.contains(search, case=False, na=False)
-    ]
+# -----------------------------
+# KPI CARDS
+# -----------------------------
+st.subheader("📌 Key Metrics")
+k1, k2, k3, k4 = st.columns(4)
 
-# ---------- Metrics ----------
-total_vendors = len(filtered_df)
-high_risk = len(filtered_df[filtered_df["risk_category"] == "High Risk"])
-avg_score = round(filtered_df["risk_score"].mean(), 2) if len(filtered_df) > 0 else 0
+k1.metric("Total Vendors", len(filtered_df))
+k2.metric("High Risk Vendors", len(filtered_df[filtered_df["risk_category"] == "High Risk"]))
+k3.metric("Avg Risk Score", round(filtered_df["risk_score"].mean(), 2) if len(filtered_df) > 0 else 0)
+k4.metric("Critical Vendors", len(filtered_df[filtered_df["critical_vendor_flag"].isin(["yes", "y", "true", "1"])]))
 
-st.markdown('<div class="section-header">Key Metrics</div>', unsafe_allow_html=True)
+# -----------------------------
+# TOP 3 RISK VENDORS
+# -----------------------------
+st.subheader("🚨 Top 3 Risk Vendors")
 
-c1, c2, c3 = st.columns(3)
+top3 = filtered_df.sort_values(by="risk_score", ascending=False).head(3)
 
-c1.markdown(f'<div class="metric-card"><div class="metric-label">Total Vendors</div><div class="metric-value">{total_vendors}</div></div>', unsafe_allow_html=True)
-c2.markdown(f'<div class="metric-card"><div class="metric-label">High Risk Vendors</div><div class="metric-value">{high_risk}</div></div>', unsafe_allow_html=True)
-c3.markdown(f'<div class="metric-card"><div class="metric-label">Avg Risk Score</div><div class="metric-value">{avg_score}</div></div>', unsafe_allow_html=True)
+if len(top3) > 0:
+    c1, c2, c3 = st.columns(3)
+    cards = [c1, c2, c3]
 
-# ---------- Insight ----------
-st.progress(min(avg_score / 100, 1.0))
-
-if avg_score > 60:
-    st.error("⚠️ High vendor risk detected")
-elif avg_score > 40:
-    st.warning("⚠️ Moderate vendor risk")
+    for idx, (_, row) in enumerate(top3.iterrows()):
+        with cards[idx]:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #111827, #1f2937);
+                padding: 18px;
+                border-radius: 16px;
+                border: 1px solid rgba(255,255,255,0.08);
+                min-height: 180px;">
+                <h4 style="color:white; margin-bottom:8px;">{row.get('vendor_name', 'Unknown Vendor')}</h4>
+                <p style="color:#cbd5e1; margin:4px 0;"><b>Vendor ID:</b> {row.get('vendor_id', '')}</p>
+                <p style="color:#cbd5e1; margin:4px 0;"><b>Risk Score:</b> {row.get('risk_score', 0)}</p>
+                <p style="color:#cbd5e1; margin:4px 0;"><b>Risk Category:</b> {row.get('risk_category', '')}</p>
+                <p style="color:#cbd5e1; margin:4px 0;"><b>Primary Driver:</b> {row.get('primary_risk_driver', '')}</p>
+            </div>
+            """, unsafe_allow_html=True)
 else:
-    st.success("✅ Vendor ecosystem stable")
+    st.info("No vendors available for the selected filter.")
 
-# ---------- Layout ----------
-left, right = st.columns([2, 1])
+# -----------------------------
+# RISK SCORE BY VENDOR
+# -----------------------------
+st.subheader("📊 Risk Score by Vendor")
 
-# ---------- Left ----------
-with left:
-    st.markdown('<div class="section-header">Vendor Overview</div>', unsafe_allow_html=True)
-    st.dataframe(filtered_df, use_container_width=True)
+if len(filtered_df) > 0 and "vendor_name" in filtered_df.columns:
+    chart_df = filtered_df.sort_values(by="risk_score", ascending=False)[["vendor_name", "risk_score"]]
+    st.bar_chart(chart_df.set_index("vendor_name"))
+else:
+    st.info("No chart data available.")
 
-    st.markdown('<div class="section-header">Risk Distribution</div>', unsafe_allow_html=True)
+# -----------------------------
+# RISK DISTRIBUTION
+# -----------------------------
+st.subheader("📉 Risk Distribution")
+if len(filtered_df) > 0:
+    st.bar_chart(filtered_df["risk_category"].value_counts())
+else:
+    st.info("No risk distribution available.")
 
-    if len(filtered_df) > 0:
-        risk_counts = filtered_df["risk_category"].value_counts().reset_index()
-        risk_counts.columns = ["Risk", "Count"]
+# -----------------------------
+# RISK DRIVERS TABLE
+# -----------------------------
+st.subheader("🔍 Risk Drivers")
 
-        fig = px.bar(
-            risk_counts,
-            x="Risk",
-            y="Count",
-            color="Risk",
-            color_discrete_map={
-                "High Risk": "#ef4444",
-                "Medium Risk": "#f59e0b",
-                "Low Risk": "#22c55e"
-            }
-        )
+risk_driver_cols = [col for col in [
+    "vendor_name",
+    "vendor_id",
+    "risk_score",
+    "primary_risk_driver",
+    "incident_count",
+    "issues_found",
+    "compliance_score",
+    "financial_risk_score",
+    "delivery_score",
+    "quality_score",
+    "sla_breach_count"
+] if col in filtered_df.columns]
 
-        fig.update_layout(
-            plot_bgcolor="#0b1220",
-            paper_bgcolor="#0b1220",
-            font_color="white"
-        )
+st.dataframe(
+    filtered_df.sort_values(by="risk_score", ascending=False)[risk_driver_cols],
+    use_container_width=True
+)
 
-        st.plotly_chart(fig, use_container_width=True)
+# -----------------------------
+# VENDOR OVERVIEW
+# -----------------------------
+st.subheader("📋 Vendor Overview")
 
-        st.markdown('<div class="section-header">Top Risk Vendors</div>', unsafe_allow_html=True)
+overview_cols = [col for col in [
+    "vendor_id",
+    "vendor_name",
+    "country",
+    "category",
+    "contract_value",
+    "delivery_score",
+    "quality_score",
+    "compliance_score",
+    "issues_found",
+    "financial_risk_score",
+    "incident_count",
+    "critical_vendor_flag",
+    "risk_score",
+    "risk_category",
+    "primary_risk_driver"
+] if col in filtered_df.columns]
 
-        top10 = filtered_df.sort_values("risk_score", ascending=False).head(10)
+st.dataframe(filtered_df[overview_cols], use_container_width=True)
 
-        fig_top = px.bar(
-            top10,
-            x="vendor_name",
-            y="risk_score",
-            color="risk_category",
-            color_discrete_map={
-                "High Risk": "#ef4444",
-                "Medium Risk": "#f59e0b",
-                "Low Risk": "#22c55e"
-            }
-        )
+# -----------------------------
+# HIGH RISK VENDORS ONLY
+# -----------------------------
+st.subheader("⚠️ High Risk Vendors")
 
-        fig_top.update_layout(
-            plot_bgcolor="#0b1220",
-            paper_bgcolor="#0b1220",
-            font_color="white"
-        )
+high_risk_df = filtered_df[filtered_df["risk_category"] == "High Risk"]
 
-        st.plotly_chart(fig_top, use_container_width=True)
+if len(high_risk_df) > 0:
+    st.dataframe(
+        high_risk_df.sort_values(by="risk_score", ascending=False)[overview_cols],
+        use_container_width=True
+    )
+else:
+    st.success("No high risk vendors found for the selected filters.")
 
-# ---------- Right ----------
-with right:
-    st.markdown('<div class="section-header">Insights</div>', unsafe_allow_html=True)
-
-    if len(filtered_df) > 0:
-        top = filtered_df.sort_values("risk_score", ascending=False).iloc[0]
-
-        st.markdown(f"""
-        <div class="info-card">
-        <b>Top Risk Vendor</b><br><br>
-        {top['vendor_name']}<br>
-        Score: {round(top['risk_score'], 2)}<br>
-        Category: {top['risk_category']}
-        </div>
-        """, unsafe_allow_html=True)
-
-# ---------- Drilldown ----------
-st.markdown('<div class="section-header">Vendor Drilldown</div>', unsafe_allow_html=True)
+# -----------------------------
+# FOOTER INSIGHT
+# -----------------------------
+st.subheader("🧠 Dashboard Insight")
 
 if len(filtered_df) > 0:
-    selected = st.selectbox("Select Vendor", filtered_df["vendor_name"].unique())
-    v = filtered_df[filtered_df["vendor_name"] == selected].iloc[0]
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.write("### Vendor Details")
-        st.dataframe(v.to_frame(name="Value"))
-
-    with col2:
-        st.write("### Risk Breakdown")
-
-        risk_cols = [
-            "delivery_risk",
-            "compliance_risk",
-            "financial_risk",
-            "performance_risk",
-            "incident_risk"
-        ]
-
-        if all(col in df.columns for col in risk_cols):
-            breakdown = pd.DataFrame({
-                "Factor": ["Delivery", "Compliance", "Financial", "Performance", "Incidents"],
-                "Score": [v[col] for col in risk_cols]
-            })
-
-            fig_pie = px.pie(
-                breakdown,
-                names="Factor",
-                values="Score",
-                hole=0.4
-            )
-
-            fig_pie.update_layout(
-                plot_bgcolor="#0b1220",
-                paper_bgcolor="#0b1220",
-                font_color="white"
-            )
-
-            st.plotly_chart(fig_pie, use_container_width=True)
-        else:
-            st.info("Detailed risk breakdown not available in current dataset.")
+    highest_vendor = filtered_df.sort_values(by="risk_score", ascending=False).iloc[0]
+    st.info(
+        f"Highest current risk vendor is {highest_vendor.get('vendor_name', 'Unknown')} "
+        f"with a risk score of {highest_vendor.get('risk_score', 0)}. "
+        f"The primary risk driver is {highest_vendor.get('primary_risk_driver', 'N/A')}."
+    )
+else:
+    st.info("No filtered data available to generate insights.")
