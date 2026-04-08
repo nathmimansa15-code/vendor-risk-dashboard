@@ -1,5 +1,5 @@
 # Predictive Vendor Risk Intelligence Dashboard
-
+End-to-end vendor risk intelligence system that integrates compliance, financial, incident, and performance data to predict high-risk vendors using machine learning.
 An end-to-end data analytics and machine learning system that integrates multi-source vendor data to predict high-risk vendors and support proactive decision-making.
 
 ---
@@ -9,13 +9,16 @@ https://vendor-risk-dashboard.streamlit.app
 
 ---
 
-## 📷 Dashboard Preview
+## 📷Dashboard Overview
 ![Dashboard](dashboard-top.png)
 
+## 🤖 Model Evaluation
 ![Model Evaluation](Model%20Evaluation.png)
 
+## 🚨 High Risk Vendors
 ![High Risk Vendors](high%20risk%20vendor.png)
 
+## 🔮 Risk Prediction
 ![Prediction Result](prediction-result.png)
 
 ---
