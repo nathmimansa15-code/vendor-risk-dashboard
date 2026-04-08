@@ -10,7 +10,13 @@ https://vendor-risk-dashboard.streamlit.app
 ---
 
 ## 📷 Dashboard Preview
-![Dashboard](dashboard.png)
+![Dashboard](dashboard-top.png)
+
+![Model Evaluation](Model%20Evaluation.png)
+
+![High Risk Vendors](high%20risk%20vendor.png)
+
+![Prediction Result](prediction-result.png)
 
 ---
 
