@@ -1,5 +1,10 @@
 # Predictive Vendor Risk Intelligence Dashboard
 💡 Proactively identifies high-risk vendors to reduce operational and financial risks.
+## 🚀 Project Highlights
+- Built an end-to-end vendor risk intelligence system using real-world metrics
+- Implemented machine learning model for risk prediction
+- Designed interactive Streamlit dashboard for decision-making
+- Identified high-risk vendors using multi-factor scoring
 
 End-to-end vendor risk intelligence system that integrates compliance, financial, incident, and performance data to predict high-risk vendors using machine learning.
 
